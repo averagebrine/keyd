@@ -4,7 +4,8 @@ COMMIT=$(shell git describe --no-match --always --abbrev=7 --dirty)
 VKBD=uinput
 PREFIX?=/usr/local
 
-CONFIG_DIR?=/etc/keyd
+FALLBACK_CONFIG_DIR?=/etc/keyd
+DEFAULT_CONFIG_DIR?=$(HOME)/.config/keyd
 SOCKET_PATH=/var/run/keyd.socket
 
 CFLAGS:=-DVERSION=\"v$(VERSION)\ \($(COMMIT)\)\" \
@@ -15,7 +16,8 @@ CFLAGS:=-DVERSION=\"v$(VERSION)\ \($(COMMIT)\)\" \
 	-Wno-unused \
 	-std=c11 \
 	-DSOCKET_PATH=\"$(SOCKET_PATH)\" \
-	-DCONFIG_DIR=\"$(CONFIG_DIR)\" \
+	-DDEFAULT_CONFIG_DIR=\"$(DEFAULT_CONFIG_DIR)\" \
+	-DFALLBACK_CONFIG_DIR=\"$(FALLBACK_CONFIG_DIR)\" \
 	-DDATA_DIR=\"$(PREFIX)/share/keyd\" \
 	-D_FORTIFY_SOURCE=2 \
 	-D_DEFAULT_SOURCE \
@@ -62,7 +64,7 @@ install:
 		install -Dm755 src/vkbd/usb-gadget.sh $(DESTDIR)$(PREFIX)/bin/keyd-usb-gadget.sh; \
 	fi
 
-	mkdir -p $(DESTDIR)$(CONFIG_DIR)
+	mkdir -p $(DESTDIR)$(FALLBACK_CONFIG_DIR)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin/
 	mkdir -p $(DESTDIR)$(PREFIX)/share/keyd/
 	mkdir -p $(DESTDIR)$(PREFIX)/share/keyd/layouts/

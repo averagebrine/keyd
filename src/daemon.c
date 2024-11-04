@@ -136,17 +136,17 @@ static void on_layer_change(const struct keyboard *kbd, const struct layer *laye
 	}
 }
 
-static void load_configs()
+static struct config_ent *get_configs_from_dir(const char *name)
 {
-	DIR *dh = opendir(CONFIG_DIR);
+	DIR *dh = opendir(name);
 	struct dirent *dirent;
+	struct config_ent *found_configs = NULL;
 
 	if (!dh) {
 		perror("opendir");
-		exit(-1);
+		return NULL;
 	}
 
-	configs = NULL;
 
 	while ((dirent = readdir(dh))) {
 		char path[1024];
@@ -155,7 +155,7 @@ static void load_configs()
 		if (dirent->d_type == DT_DIR)
 			continue;
 
-		len = snprintf(path, sizeof path, "%s/%s", CONFIG_DIR, dirent->d_name);
+		len = snprintf(path, sizeof path, "%s/%s", name, dirent->d_name);
 
 		if (len >= 5 && !strcmp(path + len - 5, ".conf")) {
 			struct config_ent *ent = calloc(1, sizeof(struct config_ent));
@@ -169,8 +169,8 @@ static void load_configs()
 				};
 				ent->kbd = new_keyboard(&ent->config, &output);
 
-				ent->next = configs;
-				configs = ent;
+				ent->next = found_configs;
+				found_configs = ent;
 			} else {
 				free(ent);
 				keyd_log("DEVICE: y{WARNING} failed to parse %s\n", path);
@@ -180,6 +180,20 @@ static void load_configs()
 	}
 
 	closedir(dh);
+	return found_configs;
+}
+
+static void load_configs()
+{
+	configs = get_configs_from_dir(DEFAULT_CONFIG_DIR);
+
+	if (!configs) {
+		configs = get_configs_from_dir(FALLBACK_CONFIG_DIR);
+	}
+
+	if (!configs) {
+		exit(-1);
+	}
 }
 
 static struct config_ent *lookup_config_ent(const char *id, uint8_t flags)
